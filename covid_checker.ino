@@ -12,7 +12,7 @@ const char* api_url = "https://corona-stats.online/ireland?format=json";
 const uint8_t fingerprint[20] = {0xBF, 0x56, 0x86, 0xF1, 0xA8, 0xFA, 0x3B, 0x84, 0xDB, 0x07, 0x37, 0xAF, 0x2B, 0xA9, 0x4E, 0xD5, 0x6D, 0x53, 0xDD, 0x6B};
 
 U8X8_SSD1306_128X64_NONAME_HW_I2C oled(U8X8_PIN_NONE);
-
+bool oled_set = false;
 void setup() {
   Serial.begin(115200);
   //Wifi
@@ -58,41 +58,37 @@ void loop() {
           }
           else
           {
-            JsonObject root = doc.as<JsonArray>()[0];
-  
+            JsonObject root = doc.as<JsonObject>()["data"][0];
+            
             int deaths = root["deaths"];
             int cases = root["confirmed"];
-  
-            int yday_cases = root["confirmedByDay"][root["confirmedByDay"].size() - 2];
-            int yday_deaths = root["deathsByDay"][root["deathsByDay"].size() - 2];
-  
-            int inc_deaths = deaths - yday_deaths;
-            int inc_cases = cases - yday_cases;
-
+   
+            int inc_deaths = root["todayDeaths"];
+            int inc_cases = root["todayCases"];
+            
             const char* country = root["country"];
   
-            oled.clearDisplay();
-            oled.setCursor(0, 0);
-            oled.print(country);
-                        
-            oled.setCursor(0, 2);
-            oled.print("Deaths: ");
-            oled.setCursor(0, 3);
-            oled.print(deaths);
-            oled.print(" (+ ");
-            oled.print(inc_deaths);
-            oled.print(")");
-            oled.setCursor(0, 6);
-            oled.print("Cases: ");
-            oled.setCursor(0, 7);
-            oled.print(cases);
-            oled.print(" (+ ");
-            oled.print(inc_cases);
-            oled.print(")");
-  
-            Serial.print("deaths: ");
-            Serial.print(deaths);
-  
+            if (!oled_set || (inc_deaths != 0 && inc_cases != 0)) {
+              oled.clearDisplay();
+              oled.setCursor(0, 0);
+              oled.print(country);
+              oled.setCursor(0, 2);
+              oled.print("Deaths: ");
+              oled.setCursor(0, 3);
+              oled.print(deaths);
+              oled.print(" (+ ");
+              oled.print(inc_deaths);
+              oled.print(")");
+              oled.setCursor(0, 6);
+              oled.print("Cases: ");
+              oled.setCursor(0, 7);
+              oled.print(cases);
+              oled.print(" (+ ");
+              oled.print(inc_cases);
+              oled.print(")");
+              
+              oled_set = true;
+            }  
             //update time maybe
           }
       }
